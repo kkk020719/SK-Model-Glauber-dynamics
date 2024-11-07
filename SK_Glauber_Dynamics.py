@@ -36,6 +36,16 @@ def glauber_dynamics(x0, beta, niter, G, key):
     _, trajectory = jax.lax.scan(one_step, x0, key_)
     return trajectory
 
+def compute_energy(result, niter):
+    """ Computes the quadratic Hamiltonian for a given state of spins"""
+    def energy_fn(carry, i):
+        x, G = carry
+        energy = jnp.dot(result[i].T, jnp.dot(result[i], G)) / (n ** (3 / 2))
+        return (x, G), energy
+
+    _, energies = lax.scan(energy_fn, (result[0], G), jnp.arange(niter))
+    return energies
+
 
 # compile
 run_glauber = jax.jit(glauber_dynamics, static_argnums=(2,))
